@@ -1,4 +1,7 @@
-import { STATUSES, type Task, type TaskInput } from '../types/task'
+import { PRIORITIES, STATUSES, type Task, type TaskInput, type TaskStatus } from '../types/task'
+
+const validStatus = (value: unknown): value is TaskStatus => STATUSES.includes(value as TaskStatus)
+const validPriority = (value: unknown): value is Task['priority'] => PRIORITIES.includes(value as Task['priority'])
 
 export function validateTitle(title: string): string {
   return title.trim() ? '' : '请输入任务标题'
@@ -38,6 +41,15 @@ export function deleteTask(tasks: Task[], id: string): Task[] {
   return normalizeOrder(tasks.filter((task) => task.id !== id))
 }
 
+export function parseTasks(raw: string | null): Task[] {
+  if (raw === null) return []
+  const data: unknown = JSON.parse(raw)
+  if (!Array.isArray(data) || !data.every(isTask)) throw new Error('Invalid stored tasks')
+  const ids = new Set(data.map((task: Task) => task.id))
+  if (ids.size !== data.length) throw new Error('Duplicate task IDs')
+  return normalizeOrder(data)
+}
+
 function compareOrder(a: Task, b: Task): number {
   return a.order - b.order || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)
 }
@@ -48,4 +60,16 @@ function normalizeOrder(tasks: Task[]): Task[] {
     tasks.filter((task) => task.status === status).sort(compareOrder).forEach((task, index) => positions.set(task.id, index))
   }
   return tasks.map((task) => ({ ...task, order: positions.get(task.id) ?? 0 }))
+}
+
+function isTask(value: unknown): value is Task {
+  if (!value || typeof value !== 'object') return false
+  const task = value as Partial<Task>
+  return typeof task.id === 'string' && task.id.length > 0
+    && typeof task.title === 'string' && !!task.title.trim()
+    && typeof task.description === 'string'
+    && validStatus(task.status) && validPriority(task.priority)
+    && typeof task.order === 'number' && Number.isInteger(task.order) && task.order >= 0
+    && typeof task.createdAt === 'string' && !Number.isNaN(Date.parse(task.createdAt))
+    && typeof task.updatedAt === 'string' && !Number.isNaN(Date.parse(task.updatedAt))
 }

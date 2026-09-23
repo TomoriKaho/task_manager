@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { LayoutGrid, List, Moon, Plus, Sun } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { AlertCircle, LayoutGrid, List, Moon, Plus, Sun } from 'lucide-vue-next'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import TaskFormModal from './components/TaskFormModal.vue'
 import TaskList from './components/TaskList.vue'
 import { useTasks } from './composables/useTasks'
+import { useTheme } from './composables/useTheme'
 import { STATUSES, statusLabel, type Task, type TaskInput, type TaskStatus } from './types/task'
 
 type View = 'list' | 'board'
 const view = ref<View>('list')
-const theme = ref<'light' | 'dark'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-watch(theme, (value) => document.documentElement.classList.toggle('dark', value === 'dark'), { immediate: true })
-const { tasks, add, update, remove } = useTasks()
+const { theme, themeWarning, toggleTheme } = useTheme()
+const { tasks, storageWarning, add, update, remove } = useTasks()
+const warning = computed(() => storageWarning.value || themeWarning.value)
 const formOpen = ref(false)
 const editingTask = ref<Task | null>(null)
 const deletingTask = ref<Task | null>(null)
@@ -50,10 +51,11 @@ function confirmDelete() {
             <button type="button" :class="{ active: view === 'list' }" :aria-current="view === 'list' ? 'page' : undefined" @click="view = 'list'"><List :size="17" />列表</button>
             <button type="button" :class="{ active: view === 'board' }" :aria-current="view === 'board' ? 'page' : undefined" @click="view = 'board'"><LayoutGrid :size="17" />看板</button>
           </nav>
-          <button type="button" class="theme-toggle" :aria-label="theme === 'light' ? '切换深色模式' : '切换浅色模式'" @click="theme = theme === 'light' ? 'dark' : 'light'"><Sun :size="18" :class="{ selected: theme === 'light' }" /><Moon :size="18" :class="{ selected: theme === 'dark' }" /></button>
+          <button type="button" class="theme-toggle" :aria-label="theme === 'light' ? '切换深色模式' : '切换浅色模式'" @click="toggleTheme"><Sun :size="18" :class="{ selected: theme === 'light' }" /><Moon :size="18" :class="{ selected: theme === 'dark' }" /></button>
         </div>
       </header>
       <main class="main-content">
+        <div v-if="warning" class="storage-warning" role="status"><AlertCircle :size="18" />{{ warning }}</div>
         <div class="page-actions">
           <div class="page-intro"><p class="eyeline">我的工作区</p><h2>{{ view === 'list' ? '任务列表' : '任务看板' }}</h2><p>{{ view === 'list' ? '集中查看和管理每一项任务。' : '拖动卡片，让进度一目了然。' }}</p></div>
           <button type="button" class="button-primary add-main" @click="openCreate"><Plus :size="18" />新建任务</button>
