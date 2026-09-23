@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createTask } from './tasks'
+import { createTask, moveTask } from './tasks'
 import { loadTasks, loadTheme, saveTasks, saveTheme, TASKS_KEY, THEME_KEY } from './storage'
 
 function memoryStorage() {
@@ -19,6 +19,14 @@ describe('task storage', () => {
     const storage = memoryStorage()
     expect(saveTasks(storage, sample)).toBe(true)
     expect(loadTasks(storage)).toEqual({ value: sample, error: null })
+  })
+
+  it('preserves board order after a move and reload', () => {
+    const storage = memoryStorage()
+    const second = createTask(sample, { title: '第二项', description: '', status: 'todo', priority: 'medium' }, 'task-2', '2026-09-24T00:01:00.000Z')
+    const moved = moveTask(second, 'task-1', 'todo', 1, '2026-09-24T00:02:00.000Z')
+    saveTasks(storage, moved)
+    expect(loadTasks(storage).value.filter((task) => task.status === 'todo').sort((a, b) => a.order - b.order).map((task) => task.id)).toEqual(['task-2', 'task-1'])
   })
 
   it('starts empty when there is no stored task data', () => {

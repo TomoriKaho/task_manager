@@ -2,25 +2,26 @@
 import { computed, ref } from 'vue'
 import { AlertCircle, LayoutGrid, List, Moon, Plus, Sun } from 'lucide-vue-next'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import KanbanBoard from './components/KanbanBoard.vue'
 import TaskFormModal from './components/TaskFormModal.vue'
 import TaskList from './components/TaskList.vue'
 import { useTasks } from './composables/useTasks'
 import { useTheme } from './composables/useTheme'
-import { STATUSES, statusLabel, type Task, type TaskInput, type TaskStatus } from './types/task'
+import type { Task, TaskInput, TaskStatus } from './types/task'
 
 type View = 'list' | 'board'
 const view = ref<View>('list')
 const { theme, themeWarning, toggleTheme } = useTheme()
-const { tasks, storageWarning, add, update, remove } = useTasks()
+const { tasks, storageWarning, add, update, remove, move } = useTasks()
 const warning = computed(() => storageWarning.value || themeWarning.value)
 const formOpen = ref(false)
 const editingTask = ref<Task | null>(null)
 const deletingTask = ref<Task | null>(null)
 const initialStatus = ref<TaskStatus>('todo')
 
-function openCreate() {
+function openCreate(status: TaskStatus = 'todo') {
   editingTask.value = null
-  initialStatus.value = 'todo'
+  initialStatus.value = status
   formOpen.value = true
 }
 
@@ -58,15 +59,10 @@ function confirmDelete() {
         <div v-if="warning" class="storage-warning" role="status"><AlertCircle :size="18" />{{ warning }}</div>
         <div class="page-actions">
           <div class="page-intro"><p class="eyeline">我的工作区</p><h2>{{ view === 'list' ? '任务列表' : '任务看板' }}</h2><p>{{ view === 'list' ? '集中查看和管理每一项任务。' : '拖动卡片，让进度一目了然。' }}</p></div>
-          <button type="button" class="button-primary add-main" @click="openCreate"><Plus :size="18" />新建任务</button>
+          <button type="button" class="button-primary add-main" @click="openCreate()"><Plus :size="18" />新建任务</button>
         </div>
         <TaskList v-if="view === 'list'" :tasks="tasks" @edit="openEdit" @delete="deletingTask = $event" />
-        <section v-else class="board-view" aria-label="任务看板">
-          <div v-for="status in STATUSES" :key="status" class="board-column" :class="`column-${status}`">
-            <div class="column-header"><h2>{{ statusLabel[status] }}</h2><span class="column-count">{{ tasks.filter((task) => task.status === status).length }}</span></div>
-            <div class="column-tasks"><div class="column-empty">看板卡片将在第 4 个里程碑开放</div></div>
-          </div>
-        </section>
+        <KanbanBoard v-else :tasks="tasks" @edit="openEdit" @add="openCreate" @move="move" />
       </main>
     </div>
     <TaskFormModal v-if="formOpen" :task="editingTask" :initial-status="initialStatus" @save="saveTask" @close="formOpen = false" />

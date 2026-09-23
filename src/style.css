@@ -128,6 +128,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .mobile-list { display: none; }
 
 .board-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: 16px; min-height: 560px; }
+.board-jump { display: none; }
 .board-column { display: flex; flex-direction: column; min-width: 0; padding: 14px; border-radius: 11px; }
 .column-todo { background: var(--todo); }
 .column-doing { background: var(--doing); }
@@ -143,6 +144,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .task-card:hover { border-color: #b8cbea; box-shadow: 0 5px 14px rgba(21, 47, 77, .09); }
 .card-top { display: flex; align-items: start; justify-content: space-between; gap: 6px; }
 .card-top h3 { margin: 0; padding-top: 1px; font-size: 14px; line-height: 1.45; font-weight: 710; }
+.card-open { padding: 0; color: inherit; background: transparent; border: 0; font: inherit; text-align: left; }
+.card-open:hover { color: var(--blue); }
 .drag-handle { display: grid; place-items: center; flex: none; width: 28px; height: 28px; margin: -5px -5px 0 0; padding: 0; color: #9aa9bc; background: transparent; border: 0; border-radius: 5px; cursor: grab; touch-action: none; }
 .drag-handle:hover, .drag-handle:focus-visible { color: var(--blue); background: var(--blue-soft); }
 .drag-handle:active { cursor: grabbing; }
@@ -197,6 +200,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .page-intro h2 { font-size: 24px; }
   .page-intro > p:last-child { font-size: 12px; }
   .board-view { display: flex; flex-direction: column; gap: 15px; min-height: 0; }
+  .board-jump { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .board-jump button { min-height: 37px; padding: 0 4px; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 620; }
+  .board-jump button:hover { color: var(--blue); border-color: var(--blue); }
   .board-column { min-height: 190px; }
   .column-tasks { min-height: 75px; }
   .column-empty { min-height: 75px; }

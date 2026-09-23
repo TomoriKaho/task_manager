@@ -41,6 +41,26 @@ export function deleteTask(tasks: Task[], id: string): Task[] {
   return normalizeOrder(tasks.filter((task) => task.id !== id))
 }
 
+export function tasksInStatus(tasks: Task[], status: TaskStatus): Task[] {
+  return tasks.filter((task) => task.status === status).sort(compareOrder)
+}
+
+export function moveTask(tasks: Task[], id: string, targetStatus: TaskStatus, targetIndex: number, now: string): Task[] {
+  const moving = tasks.find((task) => task.id === id)
+  if (!moving) return tasks
+  const oldIndex = tasksInStatus(tasks, moving.status).findIndex((task) => task.id === id)
+  if (moving.status === targetStatus && oldIndex === targetIndex) return tasks
+
+  const remaining = tasks.filter((task) => task.id !== id)
+  const target = tasksInStatus(remaining, targetStatus)
+  const index = Math.max(0, Math.min(targetIndex, target.length))
+  target.splice(index, 0, { ...moving, status: targetStatus, updatedAt: now })
+  return STATUSES.flatMap((status) => {
+    const column = status === targetStatus ? target : tasksInStatus(remaining, status)
+    return column.map((task, order) => ({ ...task, order }))
+  })
+}
+
 export function parseTasks(raw: string | null): Task[] {
   if (raw === null) return []
   const data: unknown = JSON.parse(raw)

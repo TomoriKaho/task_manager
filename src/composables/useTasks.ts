@@ -1,7 +1,7 @@
 import { ref } from 'vue'
-import { createTask, deleteTask, updateTask } from '../lib/tasks'
+import { createTask, deleteTask, moveTask, updateTask } from '../lib/tasks'
 import { browserStorage, loadTasks, saveTasks } from '../lib/storage'
-import type { Task, TaskInput } from '../types/task'
+import type { Task, TaskInput, TaskStatus } from '../types/task'
 
 export function useTasks() {
   const loaded = loadTasks(browserStorage)
@@ -28,5 +28,12 @@ export function useTasks() {
     persist()
   }
 
-  return { tasks, storageWarning, add, update, remove }
+  function move(id: string, status: TaskStatus, index: number) {
+    const next = moveTask(tasks.value, id, status, index, new Date().toISOString())
+    if (next === tasks.value) return
+    tasks.value = next
+    persist()
+  }
+
+  return { tasks, storageWarning, add, update, remove, move }
 }

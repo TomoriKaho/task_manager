@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createTask, deleteTask, updateTask, validateTitle } from './tasks'
+import { createTask, deleteTask, moveTask, tasksInStatus, updateTask, validateTitle } from './tasks'
 import type { TaskInput } from '../types/task'
 
 const now = '2026-09-24T00:00:00.000Z'
@@ -34,5 +34,28 @@ describe('task editing and deletion', () => {
     const remaining = deleteTask(second, 'first')
     expect(remaining).toHaveLength(1)
     expect(remaining[0]).toMatchObject({ id: 'second', order: 0 })
+  })
+})
+
+describe('board moves', () => {
+  const first = createTask([], { ...base, title: '第一项' }, 'first', now)
+  const second = createTask(first, { ...base, title: '第二项' }, 'second', now)
+  const third = createTask(second, { ...base, title: '第三项' }, 'third', now)
+
+  it('moves across columns and updates status and position', () => {
+    const moved = moveTask(third, 'second', 'doing', 0, '2026-09-24T01:00:00.000Z')
+    expect(tasksInStatus(moved, 'todo').map((task) => [task.id, task.order])).toEqual([['first', 0], ['third', 1]])
+    expect(tasksInStatus(moved, 'doing').map((task) => [task.id, task.order])).toEqual([['second', 0]])
+    expect(moved.find((task) => task.id === 'second')?.updatedAt).toBe('2026-09-24T01:00:00.000Z')
+  })
+
+  it('reorders within one column without losing task identities', () => {
+    const moved = moveTask(third, 'first', 'todo', 2, '2026-09-24T01:00:00.000Z')
+    expect(tasksInStatus(moved, 'todo').map((task) => [task.id, task.order])).toEqual([['second', 0], ['third', 1], ['first', 2]])
+    expect(moved).toHaveLength(3)
+  })
+
+  it('leaves unchanged drops untouched', () => {
+    expect(moveTask(third, 'second', 'todo', 1, '2026-09-24T01:00:00.000Z')).toBe(third)
   })
 })
